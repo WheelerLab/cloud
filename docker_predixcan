@@ -1,0 +1,12 @@
+#started VM from book (docker was installed in ch. 4)
+
+docker pull hoyinchudfci/predixcan:latest
+
+#start interactive session
+docker run -it hoyinchudfci/predixcan
+
+#note, $ prompt changes to # prompt
+python SPrediXcan.py -h
+
+#next week, figure out how to mount a bucket with predixcan and some sumstats
+#may be helfpul: https://github.com/cdesyoun/docker_predixcan
