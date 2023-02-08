@@ -1,0 +1,28 @@
+#download sumstats, models, covariances from online with wget into cloud shell or VM
+wget http://ftp.ebi.ac.uk/pub/databases/gwas/summary_statistics/GCST008001-GCST009000/GCST008031/harmonised/31217584-GCST008031-EFO_0003884.h.tsv.gz
+wget https://zenodo.org/record/6536687/files/AFA_PCAIR_baseline_models_rho0.1_zpval0.05.db
+wget https://zenodo.org/record/6536687/files/AFA_PCAIR_baseline_models_rho0.1_zpval0.05_covariances.txt.gz
+
+#i renamed the sumstats file for ease of reading
+
+#copy into bucket
+gsutil cp GCST008031_Wojcik_ChronicKidney_hg38.txt.gz gs://igregga-bucket/sumstats/
+gsutil cp AFA_PCAIR_baseline_models_rho0.1_zpval0.05.db gs://igregga-bucket/models/
+gsutil cp AFA_PCAIR_baseline_models_rho0.1_zpval0.05_covariances.txt.gz gs://igregga-bucket/covariances/
+
+#if you did this via cloud shell, download bucket data into VM
+gsutil -m cp -r gs://igregga-bucket/sumstats/* ~/data/
+gsutil -m cp -r gs://igregga-bucket/models/* ~/data/
+gsutil -m cp -r gs://igregga-bucket/covariances/* ~/data/
+
+#should now have a directory ~/data in VM with directories for sumstats, models, covariances
+
+#mount this directory to the docker image when you spin it up
+docker run -v ~/data:/home/data -it hoyinchudfci/predixcan
+
+#now you can run predixcan like normal--make sure you get file paths right. send output file to /data/output and that output directory and file will remain in your VM's local data directory when you exit the docker image
+#should also be able to copy output from VM into bucket but i goofed up and my VM didn't have access
+#some variation of:
+python software/SPrediXcan.py --model_db_path home/data/models/ALL_PCAIR_baseline_models_rho0.1_zpval0.05.db --covariance home/data/covariances/ALL_PCAIR_baseline_models_rho0.1_zpval0.05_covariances.txt.gz --gwas_file home/data/sumstats/GCST08025_Wojcik_BMI_hg38.tsv.gz --snp_column variant_id --effect_allele_column effect_allele --non_effect_allele_column other_allele --beta_column beta --se_column standard_error --pvalue_column p_value --output_file home/data/output/ALL_baseline_rho0.1_zpval0.05_BMI.csv --keep_non_rsid
+
+#notes: sumstats format as-is from GWAS Catalog doesn't match Ryan's models for snp id format; still don't know how to get files from wl3 to cloud; ideally use a bash script to run spredixcan without running docker interactively?
