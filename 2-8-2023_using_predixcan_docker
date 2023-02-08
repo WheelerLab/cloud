@@ -21,8 +21,10 @@ gsutil -m cp -r gs://igregga-bucket/covariances/* ~/data/
 docker run -v ~/data:/home/data -it hoyinchudfci/predixcan
 
 #now you can run predixcan like normal--make sure you get file paths right. send output file to /data/output and that output directory and file will remain in your VM's local data directory when you exit the docker image
-#should also be able to copy output from VM into bucket but i goofed up and my VM didn't have access
 #some variation of:
 python software/SPrediXcan.py --model_db_path home/data/models/ALL_PCAIR_baseline_models_rho0.1_zpval0.05.db --covariance home/data/covariances/ALL_PCAIR_baseline_models_rho0.1_zpval0.05_covariances.txt.gz --gwas_file home/data/sumstats/GCST08025_Wojcik_BMI_hg38.tsv.gz --snp_column variant_id --effect_allele_column effect_allele --non_effect_allele_column other_allele --beta_column beta --se_column standard_error --pvalue_column p_value --output_file home/data/output/ALL_baseline_rho0.1_zpval0.05_BMI.csv --keep_non_rsid
+
+#should also be able to copy output from VM into bucket
+gsutil cp data/output/* gs://igregga-bucket/output/
 
 #notes: sumstats format as-is from GWAS Catalog doesn't match Ryan's models for snp id format; still don't know how to get files from wl3 to cloud; ideally use a bash script to run spredixcan without running docker interactively?
