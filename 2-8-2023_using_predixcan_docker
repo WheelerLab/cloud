@@ -22,7 +22,7 @@ docker run -v ~/data:/home/data -it hoyinchudfci/predixcan
 
 #now you can run predixcan like normal--make sure you get file paths right. send output file to /data/output and that output directory and file will remain in your VM's local data directory when you exit the docker image
 #some variation of:
-python software/SPrediXcan.py --model_db_path home/data/models/ALL_PCAIR_baseline_models_rho0.1_zpval0.05.db --covariance home/data/covariances/ALL_PCAIR_baseline_models_rho0.1_zpval0.05_covariances.txt.gz --gwas_file home/data/sumstats/GCST08025_Wojcik_BMI_hg38.tsv.gz --snp_column variant_id --effect_allele_column effect_allele --non_effect_allele_column other_allele --beta_column beta --se_column standard_error --pvalue_column p_value --output_file home/data/output/ALL_baseline_rho0.1_zpval0.05_BMI.csv --keep_non_rsid
+python software/SPrediXcan.py --model_db_path home/data/models/AFA_PCAIR_baseline_models_rho0.1_zpval0.05.db --covariance home/data/covariances/AFA_PCAIR_baseline_models_rho0.1_zpval0.05_covariances.txt.gz --gwas_file home/data/sumstats/GCST08025_Wojcik_BMI_hg38.tsv.gz --snp_column variant_id --effect_allele_column effect_allele --non_effect_allele_column other_allele --beta_column beta --se_column standard_error --pvalue_column p_value --output_file home/data/output/ALL_baseline_rho0.1_zpval0.05_BMI.csv --keep_non_rsid
 
 #should also be able to copy output from VM into bucket
 gsutil cp data/output/* gs://igregga-bucket/output/
