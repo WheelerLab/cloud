@@ -1,0 +1,49 @@
+#Data can be moved from wheelerlab3 to the GCE bucket using gsutil
+#gsutil is a part of the Google Cloud CLI, which must be installed to wheelerlab3
+#Installation commands # Run on wheelerlab3
+#From https://cloud.google.com/sdk/docs/install#linux
+
+# Step 1:Download the linux 64-bit archive file at the command line
+curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-417.0.0-linux-x86_64.tar.gz
+
+# Step 2: Extract the contents of the archive
+tar -xf google-cloud-cli-417.0.0-linux-x86_64.tar.gz
+
+# Step 3: Add the gcloud CLI to your path by running the installation script.
+./google-cloud-sdk/install.sh
+
+# Step 4: Open a new terminal so that the changes take effect
+# Step 5: Initilize the gcloud CLI
+./google-cloud-sdk/bin/gcloud init
+
+#Now we can use gsutil to move any data from wheelerlab3 to our bucket
+# To check this, run the following and ensure that your bucket shows up
+gsutil ls
+
+#Move PAGE GWAS sumstats to GCE bucket
+gsutil cp /home/daniel/SPrediXcan/Summary_statistics/WojcikG/WojcikG_WBC_count.harmonised.SNPsIDmod.txt.gz gs://<bucket_name>
+
+#Running PrediXcan on our VM
+# Now, on our VM, we can copy the summary stats from our bucket to our data folder
+gsutil -m cp gs://book_test_wheelerlab/WojcikG_WBC_count.harmonised.SNPsIDmod.txt.gz ~/data/
+#Now using the AFA model and AFA covariance file from last week with these sumstats, we should be able to perform SPrediXcan
+
+# Run the docker image of PrediXcan
+docker run -v ~/data:/data -it hoyinchudfci/predixcan
+
+#Once in the container, go up a directory
+cd ..
+#Our inputs and outputs are in the data directory
+#Our software is in the software directory
+#SPrediXcan command:
+python software/SPrediXcan.py --model_db_path data/AFA_PCAIR_baseline_models_rho0.1_zpval0.05.db --covariance data/AFA_PCAIR_baseline_models_rho0.1_zpval0.05_covariances.txt.gz --gwas_file data/WojcikG_WBC_count.harmonised.SNPsIDmod.txt.gz --snp_column rsid --effect_allele_column Effect-allele --non_effect_allele_column Other-allele --beta_column Beta --se_column SE --pvalue_column P-val --output_file data/AFA_baseline_rho0.1_zpval0.05_BMI.csv --keep_non_rsid
+
+#Check output file
+ls data
+#No less or nano with this docker image, so we will have to look at it once we exit
+exit
+
+ls data
+#The output file is now on our VM
+nano data/AFA_baseline_rho0.1_zpval0.05_BMI.csv
+#Mine is empty like last week :\ So, we have some problem with our inputs / running PrediXcan, but not with docker.
