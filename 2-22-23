@@ -1,0 +1,56 @@
+#Dockerfile
+#mix of Daniel's Dockerfile along with requirements from the one on Docker hub (hoyinchudfci/predixcan)
+#added nano and less capabilities
+FROM ubuntu
+RUN apt-get update
+RUN apt-get install nano
+RUN apt-get install less
+RUN apt-get install -y python3.6 python3-pip git
+RUN pip install numpy
+RUN pip install scipy
+RUN pip install pandas
+RUN pip install patsy
+RUN pip install statsmodels
+RUN pip install h5py
+RUN pip install bgen_reader
+RUN pip install cyvcf2
+RUN pip install pyliftover
+RUN pip install sqlalchemy
+RUN git clone https://github.com/hakyimlab/MetaXcan
+#CMD ["python3", "MetaXcan/software/SPrediXcan.py", "--help"]
+ENTRYPOINT /bin/bash
+
+#all making our own? 
+#login
+docker login
+#build image based on updated Dockerfile (must be named Dockerfile)
+docker image build -t cczapla/predixcan .
+#push to Docker hub
+docker push cczapla/predixcan
+#pull updated image
+docker pull cczapla/predixcan
+
+#run interactively
+#now can use less and nano
+docker run -v ~/camilla-bucket:/home/camilla-bucket -it cczapla/predixcan
+
+#same predixcan test run as last week
+python3 /MetaXcan/software/SPrediXcan.py \
+--model_db_path /home/camilla-bucket/AFA_PCAIR_baseline_models_rho0.1_zpval0.05.db \
+--covariance /home/camilla-bucket/AFA_PCAIR_baseline_models_rho0.1_zpval0.05_covariances.txt.gz \
+--gwas_file /home/camilla-bucket/WojcikG_WBC_count.harmonised.SNPsIDmod.txt.gz \
+--snp_column SNP_hg38 \
+--chromosome_column chrom \
+--position_column hg38_pos \
+--effect_allele_column Effect-allele \
+--non_effect_allele_column Other-allele \
+--pvalue_column P-val \
+--beta_column Beta \
+--keep_non_rsid \
+--output_file /home/camilla-bucket/SPrediXcan_test_run.csv
+
+##error
+INFO - Unexpected error: module 'numpy' has no attribute 'object'.
+`np.object` was a deprecated alias for the builtin `object`. To avoid this error in existing code, use `object` by itself. Doing this will not modify any behavior and is safe. 
+The aliases was originally deprecated in NumPy 1.20; for more details and guidance see the original release note at:
+    https://numpy.org/devdocs/release/1.20.0-notes.html#deprecations
