@@ -1,0 +1,79 @@
+##step by step instructions for building a docker image on the Google Cloud Platform Virtual Machine (VM)
+
+#have files for PrediXcan analysis in a local directory on VM (copied from bucket)
+#Google Cloud Platform VM already has docker installed
+
+#make Docker account in order to push Docker Images to Docker Hub
+#then login using the following command:
+docker login
+
+#now we can make a Docker Image by creating a text file with directions for the image
+#this is called a Dockerfile and it must be named literally "Dockerfile" in your directory
+#open your file
+nano Dockerfile
+
+#example Dockerfile for Predixcan
+#FROM argument tells the new Docker Image what established Docker Image from Docker hub to build itself upon
+#RUN commands build the environment of the container with all the dependencies needed (in this case for PrediXcan)
+#CMD gives the Dockerfile a default command to run if no other command is given
+
+FROM ubuntu
+ENV PATH="/root/miniconda3/bin:${PATH}"
+ARG PATH="/root/miniconda3/bin:${PATH}"
+RUN apt-get update
+RUN apt-get install nano
+RUN apt-get install less
+Run apt-get install -y git
+RUN apt-get install -y wget && rm -rf /var/lib/apt/lists/*
+
+RUN wget \
+    https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh \
+    && mkdir /root/.conda \
+    && bash Miniconda3-latest-Linux-x86_64.sh -b \
+    && rm -f Miniconda3-latest-Linux-x86_64.sh
+
+RUN git clone https://github.com/hakyimlab/MetaXcan
+RUN conda env create -f MetaXcan/software/conda_env.yaml
+
+# Make RUN commands use the new environment:
+# https://pythonspeed.com/articles/activate-conda-dockerfile/
+RUN conda init
+RUN echo 'conda activate imlabtools' >> ~/.bashrc
+SHELL ["/bin/bash", "--login", "-c"]
+CMD ["python3", "MetaXcan/software/SPrediXcan.py", "--help"]
+ENTRYPOINT /bin/bash
+
+#once we have a Dockerfile then we can build the image
+#cczapla/predixcan (Docker username/Docker image name)
+#Docker image name must be lowercase
+#here my Dockerfile is in my current directory
+docker image build -t cczapla/predixcan .
+#push to Docker hub
+docker push cczapla/predixcan
+#pull updated image
+docker pull cczapla/predixcan
+
+#run interactively
+#docker run is how we run a container
+#the flag "-v" mounts the directory "~/camilla-bucket" to the docker
+#inside the Docker container the path to the contents of the mounted folder will be "/home/camilla-bucket"
+#the flag "-it" is meant for opening up the container so it is interactive
+docker run -v ~/camilla-bucket:/home/camilla-bucket -it cczapla/predixcan
+
+#example PrediXcan script
+#the output files need to be directed to the folder ("home/camilla-bucket")
+#so that it is outside the container in "~/camilla-bucket" once the container is closed
+#otherwise the output file is lost
+python3 /MetaXcan/software/SPrediXcan.py \
+--model_db_path /home/camilla-bucket/AFA_PCAIR_baseline_models_rho0.1_zpval0.05.db \
+--covariance /home/camilla-bucket/AFA_PCAIR_baseline_models_rho0.1_zpval0.05_covariances.txt.gz \
+--gwas_file /home/camilla-bucket/WojcikG_WBC_count.harmonised.SNPsIDmod.txt.gz \
+--snp_column SNP_hg38 \
+--chromosome_column chrom \
+--position_column hg38_pos \
+--effect_allele_column Effect-allele \
+--non_effect_allele_column Other-allele \
+--pvalue_column P-val \
+--beta_column Beta \
+--keep_non_rsid \
+--output_file /home/camilla-bucket/SPrediXcan_test_run.csv
